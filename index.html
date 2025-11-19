@@ -15,13 +15,39 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            transition: all 0.3s ease;
-            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                        box-shadow 0.3s ease,
+                        opacity 0.3s ease;
+            cursor: grab;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 2rem;
+        }
+        
+        .candy:active {
+            cursor: grabbing;
+        }
+        
+        .candy.square {
+            border-radius: 15%;
+        }
+        
+        .candy.diamond {
+            transform: rotate(45deg);
+            border-radius: 15%;
+        }
+        
+        .candy.diamond span {
+            transform: rotate(-45deg);
+        }
+        
+        .candy.heart::before {
+            content: '❤️';
+            position: absolute;
+            font-size: 1rem;
+            top: -5px;
         }
         
         .candy:hover {
@@ -46,24 +72,89 @@
         
         .candy.striped {
             background-image: repeating-linear-gradient(
-                45deg,
+                90deg,
                 transparent,
-                transparent 5px,
-                rgba(255, 255, 255, 0.3) 5px,
-                rgba(255, 255, 255, 0.3) 10px
+                transparent 3px,
+                rgba(255, 255, 255, 0.5) 3px,
+                rgba(255, 255, 255, 0.5) 6px
             );
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
         }
         
-        .candy.wrapped::before {
-            content: '🎁';
+        .candy.wrapped {
+            background-image: 
+                linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.6) 55%, transparent 55%),
+                linear-gradient(-45deg, transparent 45%, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.6) 55%, transparent 55%);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+            animation: wrapped-glow 1s infinite;
+        }
+        
+        .candy.colorbomb {
+            background: linear-gradient(135deg, 
+                red, orange, yellow, green, blue, indigo, violet);
+            animation: rainbow-spin 2s linear infinite;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.9);
+        }
+        
+        .candy.colorbomb::before {
+            content: '🌈';
             position: absolute;
             font-size: 1.5rem;
         }
         
-        .candy.bomb::before {
-            content: '💣';
-            position: absolute;
-            font-size: 1.5rem;
+        @keyframes rainbow-spin {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+        
+        @keyframes wrapped-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.7); }
+            50% { box-shadow: 0 0 30px rgba(255, 255, 255, 1); }
+        }
+        
+        .obstacle {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: not-allowed;
+        }
+        
+        .obstacle.crate {
+            background: linear-gradient(135deg, #8b6f47, #a68a64);
+            border: 3px solid #654321;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+        }
+        
+        .obstacle.crate::before {
+            content: '📦';
+        }
+        
+        .obstacle.ice {
+            background: linear-gradient(135deg, #b8e6f5, #d4f1f9);
+            border: 3px solid #7dd3f0;
+            box-shadow: 0 0 15px rgba(125, 211, 240, 0.5);
+        }
+        
+        .obstacle.ice::before {
+            content: '❄️';
+        }
+        
+        .obstacle.locked {
+            background: linear-gradient(135deg, #555, #777);
+            border: 3px solid #333;
+        }
+        
+        .obstacle.locked::before {
+            content: '🔒';
+        }
+        
+        .grid-cell.disabled {
+            background: transparent;
+            border: none;
         }
         
         @keyframes pulse {
@@ -72,14 +163,47 @@
         }
         
         @keyframes fall {
-            from {
+            0% {
                 transform: translateY(-100px);
                 opacity: 0;
             }
-            to {
+            60% {
+                transform: translateY(10px);
+            }
+            80% {
+                transform: translateY(-5px);
+            }
+            100% {
                 transform: translateY(0);
                 opacity: 1;
             }
+        }
+        
+        .candy.falling {
+            animation: fall var(--fall-duration, 0.6s) cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        
+        .candy.swapping {
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 10;
+        }
+        
+        @keyframes bounce-in {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2) rotate(180deg);
+            }
+            100% {
+                transform: scale(1) rotate(360deg);
+                opacity: 1;
+            }
+        }
+        
+        .candy.new {
+            animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
         }
         
         @keyframes explode {
@@ -148,7 +272,8 @@
             <div class="flex justify-between items-center flex-wrap gap-4">
                 <div>
                     <h1 class="text-4xl font-bold text-purple-600">🍭 Candy Crush</h1>
-                    <p class="text-gray-600">Level <span id="level">1</span></p>
+                    <p class="text-gray-600">Level <span id="level">1</span> - <span id="level-objective">Score Target</span></p>
+                    <div id="stars" class="text-2xl mt-1">⭐⭐⭐</div>
                 </div>
                 <div class="flex gap-6">
                     <div class="text-center">
@@ -213,6 +338,18 @@
             'orange': '🟠'
         };
         
+        // Level configurations with progressive difficulty
+        const LEVEL_CONFIGS = {
+            1: { moves: 30, target: 1000, objective: 'Score Target', obstacles: [] },
+            2: { moves: 28, target: 1500, objective: 'Score Target', obstacles: [] },
+            3: { moves: 25, target: 2000, objective: 'Break the Ice', obstacles: ['ice'] },
+            4: { moves: 25, target: 2500, objective: 'Score Target', obstacles: [] },
+            5: { moves: 22, target: 3000, objective: 'Clear the Crates', obstacles: ['crate'] },
+            6: { moves: 20, target: 3500, objective: 'Mixed Challenge', obstacles: ['ice', 'crate'] },
+            7: { moves: 20, target: 4000, objective: 'Score Target', obstacles: [] },
+            8: { moves: 18, target: 4500, objective: 'Ultimate Challenge', obstacles: ['ice', 'crate'] },
+        };
+        
         let board = [];
         let selectedCandy = null;
         let score = 0;
@@ -221,15 +358,120 @@
         let target = 1000;
         let comboMultiplier = 1;
         let isProcessing = false;
+        let soundEnabled = true;
+        let vibrationEnabled = true;
+        let obstaclesRemaining = 0;
+        
+        // Audio Context for sound generation
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContext();
+        
+        // Sound generation functions
+        function playSound(type) {
+            if (!soundEnabled) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            switch(type) {
+                case 'select':
+                    oscillator.frequency.value = 400;
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                    break;
+                    
+                case 'match':
+                    oscillator.frequency.value = 600;
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                    break;
+                    
+                case 'combo':
+                    // Create a rising tone for combo
+                    oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.3);
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                    break;
+                    
+                case 'win':
+                    // Victory fanfare
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C, E, G, C
+                    notes.forEach((freq, i) => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0.2, audioContext.currentTime + i * 0.15);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.15 + 0.3);
+                        osc.start(audioContext.currentTime + i * 0.15);
+                        osc.stop(audioContext.currentTime + i * 0.15 + 0.3);
+                    });
+                    return; // Skip single oscillator creation
+                    
+                case 'lose':
+                    oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.5);
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                    break;
+                    
+                case 'swap':
+                    oscillator.frequency.value = 500;
+                    gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.15);
+                    break;
+                    
+                case 'button':
+                    oscillator.frequency.value = 350;
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                    break;
+            }
+        }
+        
+        // Vibration function
+        function vibrate(pattern) {
+            if (!vibrationEnabled || !navigator.vibrate) return;
+            navigator.vibrate(pattern);
+        }
         
         // Initialize game
         function initGame() {
             board = [];
             score = 0;
-            moves = 30;
-            target = 1000 + (level - 1) * 500;
             comboMultiplier = 1;
+            
+            // Get level configuration or use default
+            const config = LEVEL_CONFIGS[level] || {
+                moves: 30 - Math.floor(level / 3),
+                target: 1000 + (level - 1) * 500,
+                objective: 'Score Target',
+                obstacles: level % 3 === 0 ? ['ice'] : []
+            };
+            
+            moves = config.moves;
+            target = config.target;
+            document.getElementById('level-objective').textContent = config.objective;
+            
             updateUI();
+            updateStars();
             createBoard();
             renderBoard();
             
@@ -239,6 +481,22 @@
                     shuffleBoard();
                 }
             }, 100);
+        }
+        
+        // Update star display based on score
+        function updateStars() {
+            const starsDiv = document.getElementById('stars');
+            const progress = score / target;
+            
+            if (progress >= 1) {
+                starsDiv.textContent = '⭐⭐⭐';
+            } else if (progress >= 0.7) {
+                starsDiv.textContent = '⭐⭐☆';
+            } else if (progress >= 0.4) {
+                starsDiv.textContent = '⭐☆☆';
+            } else {
+                starsDiv.textContent = '☆☆☆';
+            }
         }
         
         // Create initial board
@@ -266,8 +524,8 @@
             }
         }
         
-        // Render board
-        function renderBoard() {
+        // Render board with animation flags
+        function renderBoard(animate = false) {
             const gameBoard = document.getElementById('game-board');
             const cells = gameBoard.querySelectorAll('.grid-cell');
             
@@ -276,22 +534,34 @@
                 const col = parseInt(cell.dataset.col);
                 const candy = board[row][col];
                 
-                cell.innerHTML = '';
+                const existingCandy = cell.querySelector('.candy');
                 
-                if (candy) {
-                    const candyDiv = document.createElement('div');
-                    candyDiv.className = `candy ${candy.type}`;
-                    if (candy.special) {
-                        candyDiv.classList.add(candy.special);
+                // Only update if changed or animating
+                if (!existingCandy || !candy || existingCandy.classList.contains(`${candy.type}`) === false) {
+                    cell.innerHTML = '';
+                    
+                    if (candy) {
+                        const candyDiv = document.createElement('div');
+                        candyDiv.className = `candy ${candy.type}`;
+                        if (candy.special) {
+                            candyDiv.classList.add(candy.special);
+                        }
+                        if (candy.isNew) {
+                            candyDiv.classList.add('new');
+                            candy.isNew = false;
+                        } else if (animate) {
+                            candyDiv.classList.add('falling');
+                            candyDiv.style.setProperty('--fall-duration', `${0.3 + row * 0.05}s`);
+                        }
+                        candyDiv.textContent = CANDY_EMOJIS[candy.type];
+                        candyDiv.dataset.row = row;
+                        candyDiv.dataset.col = col;
+                        
+                        candyDiv.addEventListener('mousedown', handleCandySelect);
+                        candyDiv.addEventListener('touchstart', handleCandySelect);
+                        
+                        cell.appendChild(candyDiv);
                     }
-                    candyDiv.textContent = CANDY_EMOJIS[candy.type];
-                    candyDiv.dataset.row = row;
-                    candyDiv.dataset.col = col;
-                    
-                    candyDiv.addEventListener('mousedown', handleCandySelect);
-                    candyDiv.addEventListener('touchstart', handleCandySelect);
-                    
-                    cell.appendChild(candyDiv);
                 }
             });
         }
@@ -310,6 +580,8 @@
                 selectedCandy = { row, col };
                 e.target.classList.add('selected');
                 dragStart = { x: e.clientX || e.touches[0].clientX, y: e.clientY || e.touches[0].clientY };
+                playSound('select');
+                vibrate(10);
                 
                 document.addEventListener('mousemove', handleDrag);
                 document.addEventListener('touchmove', handleDrag);
@@ -324,6 +596,8 @@
                 document.querySelector('.candy.selected')?.classList.remove('selected');
                 selectedCandy = { row, col };
                 e.target.classList.add('selected');
+                playSound('select');
+                vibrate(10);
             }
         }
         
@@ -384,6 +658,8 @@
             board[candy1.row][candy1.col] = board[candy2.row][candy2.col];
             board[candy2.row][candy2.col] = temp;
             
+            playSound('swap');
+            vibrate(20);
             renderBoard();
             await sleep(300);
             
@@ -469,6 +745,10 @@
             let matches = findMatches();
             
             while (matches.length > 0) {
+                // Play match sound and vibrate
+                playSound('match');
+                vibrate(30);
+                
                 // Animate matches
                 matches.forEach(match => {
                     const cell = document.querySelector(`.grid-cell[data-row="${match.row}"][data-col="${match.col}"]`);
@@ -487,6 +767,8 @@
                 
                 // Show combo text
                 if (comboMultiplier > 1) {
+                    playSound('combo');
+                    vibrate([50, 50, 50]);
                     showComboText(matchScore, comboMultiplier);
                 }
                 
@@ -520,7 +802,7 @@
             updateUI();
         }
         
-        // Drop candies
+        // Drop candies with smooth animation
         async function dropCandies() {
             let dropped = false;
             
@@ -539,8 +821,8 @@
             }
             
             if (dropped) {
-                renderBoard();
-                await sleep(300);
+                renderBoard(true);
+                await sleep(400);
             }
         }
         
@@ -553,7 +835,8 @@
                             type: CANDY_TYPES[Math.floor(Math.random() * CANDY_TYPES.length)],
                             special: null,
                             row: row,
-                            col: col
+                            col: col,
+                            isNew: true
                         };
                     }
                 }
@@ -625,17 +908,23 @@
             
             const progress = Math.min((score / target) * 100, 100);
             document.getElementById('progress').style.width = progress + '%';
+            
+            updateStars();
         }
         
         // Check game over
         function checkGameOver() {
             if (score >= target) {
+                playSound('win');
+                vibrate([100, 50, 100, 50, 200]);
                 showMessage('🎉 Level Complete! 🎉');
                 setTimeout(() => {
                     level++;
                     initGame();
                 }, 2000);
             } else if (moves <= 0) {
+                playSound('lose');
+                vibrate([200, 100, 200]);
                 showMessage('😢 No more moves! Try again!');
                 setTimeout(() => {
                     initGame();
@@ -748,15 +1037,23 @@
         }
         
         // Event listeners
-        document.getElementById('hint-btn').addEventListener('click', showHint);
+        document.getElementById('hint-btn').addEventListener('click', () => {
+            playSound('button');
+            vibrate(15);
+            showHint();
+        });
         document.getElementById('shuffle-btn').addEventListener('click', () => {
             if (moves > 0) {
+                playSound('button');
+                vibrate(15);
                 moves--;
                 shuffleBoard();
                 updateUI();
             }
         });
         document.getElementById('restart-btn').addEventListener('click', () => {
+            playSound('button');
+            vibrate(15);
             level = 1;
             initGame();
         });
